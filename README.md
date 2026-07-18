@@ -1,119 +1,70 @@
-# Obsidian Memory Architecture for Hermes Agent
+# Hermes Agent Tools
 
-A modern, filesystem-first architecture for using Obsidian as Hermes Agent's durable knowledge layer.
+An independent collection of practical skills, plugins, integrations, and utilities created by AtlasOmnia for [Hermes Agent](https://github.com/NousResearch/hermes-agent).
 
-This project grew from the Reddit guide [How I use Obsidian as the long-term memory backbone for my AI assistant](https://www.reddit.com/r/hermesagent/comments/1stz6gd/how_i_use_obsidian_as_the_longterm_memory/). The original three-tier idea remains useful, but Hermes has evolved: it now has bounded built-in memory, searchable session history, optional memory-provider plugins, skill lifecycle tooling, and substantially richer cron jobs.
+These projects come from workflows that have been used, revised, and tested in real Hermes installations. Each tool should be installable on its own, documented with explicit verification steps, and safe to inspect before use.
 
-The updated design gives each system one job:
+This repository is unofficial and is not affiliated with or endorsed by Nous Research.
 
-- Hermes memory: compact facts and preferences
-- Optional memory providers: deeper fact/entity recall
-- `session_search`: exact prior conversations and task outcomes
-- Obsidian: canonical documents, project state, decisions, and daily timelines
-- Skills: reusable procedures
-- Cron/scripts: scheduled collection and transient state
+## Collection
 
-The result is less duplication, less prompt bloat, and a vault that remains useful without the agent.
+### Skills
 
-## Contents
+| Tool | Purpose | Status |
+|---|---|---|
+| [Obsidian Memory Architecture](skills/obsidian-memory-architecture/) | Use Obsidian as Hermes's durable knowledge and coordination layer without duplicating native memory, session history, or skills | Ready |
 
-- `SKILL.md` — installable Hermes skill
-- `scripts/scaffold_vault.py` — non-destructive cross-platform scaffold
-- `templates/` — daily, decision, project, and ownership-map templates
-- `tests/test_scaffold.py` — smoke tests for idempotence and overwrite safety
+Additional skills and tools will be added only after they are generalized, tested, and cleared of private configuration.
 
-## Install the skill
+## Install a skill
 
-After this repository is published, install it from its raw GitHub URL:
+Inspect the skill before installing:
 
 ```bash
-hermes skills install https://raw.githubusercontent.com/AtlasOmnia/hermes-obsidian-memory/main/SKILL.md
+hermes skills inspect https://raw.githubusercontent.com/AtlasOmnia/hermes-agent-tools/main/skills/obsidian-memory-architecture/SKILL.md
 ```
 
-Or copy this repository into your local skill library:
+Install it directly:
 
 ```bash
-mkdir -p ~/.hermes/skills/note-taking/obsidian-memory-architecture
-cp -R SKILL.md scripts templates ~/.hermes/skills/note-taking/obsidian-memory-architecture/
+hermes skills install https://raw.githubusercontent.com/AtlasOmnia/hermes-agent-tools/main/skills/obsidian-memory-architecture/SKILL.md
 ```
 
-Start a new Hermes session, then load it explicitly if needed:
+Start a new Hermes session after installation so the skill registry is refreshed.
+
+## Repository layout
 
 ```text
-/skill obsidian-memory-architecture
+hermes-agent-tools/
+├── skills/          # installable Hermes SKILL.md packages
+├── plugins/         # Hermes plugins when added
+├── integrations/    # external-service and application integrations
+├── scripts/         # standalone utilities shared across tools
+└── .github/         # validation and release workflows
 ```
 
-## Scaffold a vault
+A tool may include its own templates, scripts, references, tests, and documentation inside its directory.
 
-Preview first:
+## Quality standard
 
-```bash
-python3 scripts/scaffold_vault.py --vault "$HOME/Documents/Obsidian Vault" --dry-run
-```
+Every published tool should include:
 
-Create missing folders and starter files:
+- a clear trigger and scope;
+- exact commands or tool guidance;
+- pitfalls and recovery paths;
+- verification steps;
+- tests for executable code;
+- no credentials, personal paths, private hosts, or internal business data;
+- attribution and licensing appropriate to its sources.
 
-```bash
-python3 scripts/scaffold_vault.py --vault "$HOME/Documents/Obsidian Vault"
-```
+Pull requests must pass the repository validation workflow. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
 
-The script never overwrites existing files unless `--force` is supplied. Set the path for Hermes in the environment used to launch it:
+## Compatibility
 
-```bash
-export OBSIDIAN_VAULT_PATH="$HOME/Documents/Obsidian Vault"
-```
+The collection targets current Hermes Agent releases. Hermes evolves quickly, so each tool should link to the authoritative documentation it depends on and avoid hardcoding behavior that can be discovered from the live installation.
 
-If you persist that value in a Hermes `.env`, edit the file deliberately; do not paste secrets into prompts or commit the `.env` file.
-
-## Validate
-
-```bash
-python3 -m unittest discover -s tests -v
-python3 scripts/scaffold_vault.py --vault /tmp/hermes-obsidian-demo --dry-run
-```
-
-Validate the skill before publication:
-
-```bash
-python3 scripts/validate_skill.py
-```
-
-After installation, Hermes can also audit the registered copy:
-
-```bash
-hermes skills audit obsidian-memory-architecture --deep
-```
-
-`hermes skills inspect` resolves registry identifiers and remote sources; current releases do not accept `./SKILL.md` as a local source.
-
-## Design notes
-
-### Why not inject the whole vault?
-
-Large static context increases cost and decreases relevance. Hermes should search the vault and read the smallest useful set of notes on demand.
-
-### Why keep session history separate?
-
-Hermes already stores sessions in its searchable session database. Copying conversations into Obsidian creates duplicates that drift and wastes space. Promote only decisions, canonical state, or human-readable summaries.
-
-### Why keep procedures in skills?
-
-A procedure needs triggers, exact actions, pitfalls, and verification. Skills are designed for that. A note saying “we fixed it once” is not an executable workflow.
-
-### Does this require a specific memory provider?
-
-No. The architecture works with built-in Hermes memory alone or with any supported optional memory provider. Provider capabilities differ, so use `hermes memory status` and the current Hermes documentation rather than assuming a particular backend.
-
-## Privacy
-
-The sample files contain no personal data. Before publishing your own vault or derivative templates:
-
-- remove names, addresses, internal hosts, and account identifiers;
-- scan tracked files and Git history for secrets and PII;
-- exclude `.env`, credentials, private attachments, and volatile workspace state;
-- verify author/commit metadata;
-- review every file from a clean clone.
+Authoritative Hermes documentation: https://hermes-agent.nousresearch.com/docs/
 
 ## License
 
-MIT. See `LICENSE`.
+Unless a tool directory states otherwise, original work in this repository is licensed under the MIT License. See [LICENSE](LICENSE).
