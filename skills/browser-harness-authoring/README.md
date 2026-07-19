@@ -2,6 +2,8 @@
 
 Turn a known website workflow into a verified, site-specific Hermes skill.
 
+![Browser Harness Authoring surveys a site, maps stable steps, adds human safety gates, verifies with dummy data, and replays without crossing the final-action boundary](assets/browser-harness-workflow.png)
+
 The package updates the builder/executor idea from the Reddit workshop [Teach Hermes to Drive Any Website — Zero Config](https://www.reddit.com/r/hermesagent/comments/1tmpq0n/workshop_teach_hermes_to_drive_any_website_zero/) for current Hermes browser tools, profiles, skills, and cron behavior.
 
 ## What it produces
