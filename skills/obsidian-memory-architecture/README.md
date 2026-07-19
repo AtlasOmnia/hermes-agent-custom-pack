@@ -27,14 +27,14 @@ The result is less duplication, less prompt bloat, and a vault that remains usef
 After this repository is published, install it from its raw GitHub URL:
 
 ```bash
-hermes skills install https://raw.githubusercontent.com/AtlasOmnia/hermes-agent-tools/main/skills/obsidian-memory-architecture/SKILL.md
+hermes skills install https://raw.githubusercontent.com/AtlasOmnia/hermes-agent-custom-pack/main/skills/obsidian-memory-architecture/SKILL.md
 ```
 
 That installs the core skill definition. Clone the repository when you also want the scaffold script, templates, and tests:
 
 ```bash
-git clone https://github.com/AtlasOmnia/hermes-agent-tools.git
-cd hermes-agent-tools/skills/obsidian-memory-architecture
+git clone https://github.com/AtlasOmnia/hermes-agent-custom-pack.git
+cd hermes-agent-custom-pack/skills/obsidian-memory-architecture
 ```
 
 Or copy this repository into your local skill library:
