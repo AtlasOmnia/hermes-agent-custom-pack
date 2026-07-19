@@ -1,7 +1,7 @@
 ---
 name: browser-harness-authoring
 description: Use when mapping a repeatable website workflow into a verified Hermes skill so later runs can follow known steps instead of rediscovering the site. Surveys browser compatibility, semantic targets, failure modes, recovery paths, decision gates, and expiry using dummy data and no irreversible submissions.
-version: 1.0.0
+version: 1.0.2
 author: AtlasOmnia
 license: MIT
 platforms:
@@ -93,7 +93,8 @@ Start with the native browser sequence:
 4. `browser_console` for DOM inspection only when semantic browser tools are insufficient.
 5. `browser_vision` for spatial confirmation when text/AX data is incomplete.
 6. `browser_cdp` for targeted CDP operations only when a CDP-capable backend is attached.
-7. Computer use only as the last compatible lane when available and permitted.
+7. `browser_dialog` for explicit handling of a known native alert, confirmation, prompt, or before-unload dialog.
+8. Computer use only as the last compatible lane when available and permitted.
 
 If the current backend fails, record the concrete failure before trying another configured lane. Examples: click produces no state change, the site blocks the session, required content never hydrates, or the accessibility tree omits the target.
 
@@ -190,7 +191,7 @@ If any step fails, mark the harness `tested: false`, patch the observed issue, a
 
 Inspect the generated skill before installing it. Start a fresh Hermes session after installation so the skill registry refreshes.
 
-A separate executor profile is optional isolation, not a requirement. If one is used, remember that profiles have separate skills, sessions, memory, cron jobs, and browser state. Ensure the harness is installed in that profile and verify its tools and login state independently.
+A separate executor profile is optional Hermes-state separation, not a requirement or a sandbox. Profiles separate configuration, credentials, skills, sessions, memory, cron jobs, and gateway state, but browser isolation depends on the active backend. Managed Camofox persistence can use a profile-scoped identity; CDP and externally managed browser sessions may intentionally attach to shared state. Ensure the harness is installed in the executor profile, then verify its browser backend, tools, login state, filesystem scope, and website permissions independently.
 
 At runtime:
 

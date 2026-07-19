@@ -77,7 +77,9 @@ Use for this exact flow.
 - Replay date: `2026-07-18`
 - Dummy dataset: Generic test order
 - Steps passed: `2/2`
-- Recovery path tested: Login redirect
+- Recovery path tested: `Step 1`
+- Recovery checkpoint: `Step 1`
+- Recovery replay passed: `true`
 - Final side effect crossed: `false`
 - Known limitations: None
 
@@ -85,7 +87,14 @@ Use for this exact flow.
 - Session expiry
 
 ## Verification Checklist
-- [x] Domain verified
+- [x] Domain and start URL verified
+- [x] Semantic targets found without saved refs
+- [x] Expected checkpoint passed after every state change
+- [x] Decision and side-effect gates stopped correctly
+- [x] One safe recovery path tested
+- [x] No secret or personal data stored
+- [x] Final side effect was not crossed
+- [x] Dates and tested status updated accurately
 """
 
 
@@ -137,6 +146,68 @@ class HarnessValidatorTests(unittest.TestCase):
     def test_rejects_missing_final_boundary_declaration(self) -> None:
         errors = self.validate_text(VALID.replace("- Final side effect crossed: `false`\n", ""))
         self.assertTrue(any("Final side effect crossed" in error for error in errors))
+
+    def test_rejects_missing_steps_evidence_when_tested(self) -> None:
+        errors = self.validate_text(VALID.replace("- Steps passed: `2/2`\n", ""))
+        self.assertTrue(any("Steps passed" in error for error in errors))
+
+    def test_rejects_partial_replay_when_tested(self) -> None:
+        errors = self.validate_text(VALID.replace("Steps passed: `2/2`", "Steps passed: `1/2`"))
+        self.assertIn("Tested harness must report Steps passed as 2/2", errors)
+
+    def test_rejects_missing_recovery_replay_when_tested(self) -> None:
+        errors = self.validate_text(VALID.replace("Recovery path tested: `Step 1`", "Recovery path tested: None"))
+        self.assertIn("Tested harness must identify Recovery path tested as 'Step N'", errors)
+
+    def test_rejects_explicit_negative_recovery_evidence(self) -> None:
+        negatives = (
+            "Recovery path was never exercised",
+            "Did not test the login redirect recovery",
+            "No path was exercised",
+            "Recovery was not exercised",
+        )
+        for negative in negatives:
+            with self.subTest(negative=negative):
+                errors = self.validate_text(VALID.replace("Recovery path tested: `Step 1`", f"Recovery path tested: {negative}"))
+                self.assertIn("Tested harness must identify Recovery path tested as 'Step N'", errors)
+
+    def test_rejects_recovery_step_out_of_range(self) -> None:
+        errors = self.validate_text(VALID.replace("Recovery path tested: `Step 1`", "Recovery path tested: `Step 3`"))
+        self.assertIn("Recovery path tested must reference a step from 1 to 2", errors)
+
+    def test_rejects_missing_recovery_checkpoint(self) -> None:
+        placeholders = ("None", "TBD", "placeholder")
+        for placeholder in placeholders:
+            with self.subTest(placeholder=placeholder):
+                errors = self.validate_text(VALID.replace("Recovery checkpoint: `Step 1`", f"Recovery checkpoint: {placeholder}"))
+                self.assertIn("Tested harness must identify Recovery checkpoint as 'Step N'", errors)
+
+    def test_rejects_recovery_checkpoint_out_of_range(self) -> None:
+        errors = self.validate_text(VALID.replace("Recovery checkpoint: `Step 1`", "Recovery checkpoint: `Step 3`"))
+        self.assertIn("Recovery checkpoint must reference a step from 1 to 2", errors)
+
+    def test_rejects_failed_recovery_replay_when_tested(self) -> None:
+        errors = self.validate_text(VALID.replace("Recovery replay passed: `true`", "Recovery replay passed: `false`"))
+        self.assertIn("Tested harness must state 'Recovery replay passed: true'", errors)
+
+    def test_rejects_evidence_fields_outside_evidence_section(self) -> None:
+        evidence = "- Steps passed: `2/2`\n- Recovery path tested: `Step 1`\n- Recovery checkpoint: `Step 1`\n"
+        moved = VALID.replace(evidence, "").replace("## Common Pitfalls\n", f"## Common Pitfalls\n{evidence}")
+        errors = self.validate_text(moved)
+        self.assertIn("missing verification evidence field: Steps passed", errors)
+        self.assertIn("missing verification evidence field: Recovery path tested", errors)
+        self.assertIn("missing verification evidence field: Recovery checkpoint", errors)
+
+    def test_rejects_invalid_replay_date_when_tested(self) -> None:
+        errors = self.validate_text(VALID.replace("Replay date: `2026-07-18`", "Replay date: `not-a-date`"))
+        self.assertIn("Replay date must be an ISO date (YYYY-MM-DD)", errors)
+
+    def test_rejects_unchecked_safety_item_when_tested(self) -> None:
+        errors = self.validate_text(VALID.replace(
+            "- [x] Final side effect was not crossed",
+            "- [ ] Final side effect was not crossed",
+        ))
+        self.assertTrue(any("Final side effect was not crossed" in error for error in errors))
 
     def test_rejects_nonconsecutive_steps(self) -> None:
         errors = self.validate_text(VALID.replace("### Step 2:", "### Step 3:"))

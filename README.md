@@ -17,9 +17,9 @@ This repository is unofficial and is not affiliated with or endorsed by Nous Res
 
 ### How the packages work
 
-[![Obsidian Memory Architecture routes memory, session history, canonical documents, skills, and scheduled collection to the right system](skills/obsidian-memory-architecture/assets/memory-architecture.png)](skills/obsidian-memory-architecture/)
+[![Obsidian Memory Architecture routes memory, session history, canonical documents, skills, and scheduled collection to the right system](assets/obsidian-memory-architecture.png)](skills/obsidian-memory-architecture/)
 
-[![Browser Harness Authoring surveys a site, maps steps, adds safety gates, verifies with dummy data, and replays without crossing the authoring boundary](skills/browser-harness-authoring/assets/browser-harness-workflow.png)](skills/browser-harness-authoring/)
+[![Browser Harness Authoring surveys a site, maps steps, adds safety gates, verifies with dummy data, and replays without crossing the authoring boundary](assets/browser-harness-authoring.png)](skills/browser-harness-authoring/)
 
 Additional packages will be added only after they are generalized, tested, and cleared of private configuration.
 

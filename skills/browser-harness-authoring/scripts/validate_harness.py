@@ -47,6 +47,29 @@ STEP_FIELDS = (
     "Skip allowed",
 )
 
+EVIDENCE_FIELDS = (
+    "Verified browser lane",
+    "Replay date",
+    "Dummy dataset",
+    "Steps passed",
+    "Recovery path tested",
+    "Recovery checkpoint",
+    "Recovery replay passed",
+    "Final side effect crossed",
+    "Known limitations",
+)
+
+REQUIRED_VERIFICATION_CHECKS = (
+    "Domain and start URL verified",
+    "Semantic targets found without saved refs",
+    "Expected checkpoint passed after every state change",
+    "Decision and side-effect gates stopped correctly",
+    "One safe recovery path tested",
+    "No secret or personal data stored",
+    "Final side effect was not crossed",
+    "Dates and tested status updated accurately",
+)
+
 NAME_RE = re.compile(r"^[a-z0-9-]{1,64}$")
 LOCAL_REF_RE = re.compile(r"(?<![A-Za-z0-9])@e\d+\b")
 SECRET_RE = re.compile(
@@ -79,6 +102,14 @@ def _parse_iso(value: str, label: str, errors: list[str]) -> date | None:
     except ValueError:
         errors.append(f"{label} must be an ISO date (YYYY-MM-DD)")
         return None
+
+
+def _section(body: str, heading: str) -> str:
+    match = re.search(
+        rf"(?ms)^{re.escape(heading)}\s*\n(.*?)(?=^## |\Z)",
+        body,
+    )
+    return match.group(1) if match else ""
 
 
 def validate(path: Path) -> list[str]:
@@ -138,6 +169,7 @@ def validate(path: Path) -> list[str]:
         errors.append("Risk class must be read-only, reversible, or consequential")
 
     steps = list(STEP_RE.finditer(body))
+    step_count = len(steps)
     if not steps:
         errors.append("Flow must contain at least one '### Step N:' heading")
     else:
@@ -161,14 +193,63 @@ def validate(path: Path) -> list[str]:
             if side_effect == "true" and decision != "true":
                 errors.append(f"Step {numbers[index]} with an external side effect must be a decision gate")
 
+    evidence_section = _section(body, "## Verification Evidence")
+    evidence: dict[str, str] = {}
+    for field in EVIDENCE_FIELDS:
+        value = _field(evidence_section, field)
+        if value is None:
+            errors.append(f"missing verification evidence field: {field}")
+        else:
+            evidence[field] = value
+
+    if evidence.get("Final side effect crossed", "").lower() != "false":
+        errors.append("Verification Evidence must state 'Final side effect crossed: false'")
+    if evidence.get("Recovery replay passed", "").lower() not in {"true", "false"}:
+        errors.append("Recovery replay passed must be true or false")
+
+    if values.get("Tested", "").lower() == "true":
+        if "Replay date" in evidence:
+            _parse_iso(evidence["Replay date"], "Replay date", errors)
+
+        passed = re.fullmatch(r"(\d+)\s*/\s*(\d+)", evidence.get("Steps passed", ""))
+        if not passed:
+            errors.append("Tested harness must report Steps passed as N/N")
+        elif int(passed.group(1)) != step_count or int(passed.group(2)) != step_count:
+            errors.append(f"Tested harness must report Steps passed as {step_count}/{step_count}")
+
+        empty_evidence = {"", "none", "none yet", "not tested", "untested", "n/a", "na", "unknown"}
+        recovery = evidence.get("Recovery path tested", "").strip()
+        recovery_step = re.fullmatch(r"(?i)Step\s+(\d+)", recovery)
+        if not recovery_step:
+            errors.append("Tested harness must identify Recovery path tested as 'Step N'")
+        elif not 1 <= int(recovery_step.group(1)) <= step_count:
+            errors.append(f"Recovery path tested must reference a step from 1 to {step_count}")
+        recovery_checkpoint = re.fullmatch(
+            r"(?i)Step\s+(\d+)",
+            evidence.get("Recovery checkpoint", "").strip(),
+        )
+        if not recovery_checkpoint:
+            errors.append("Tested harness must identify Recovery checkpoint as 'Step N'")
+        elif not 1 <= int(recovery_checkpoint.group(1)) <= step_count:
+            errors.append(f"Recovery checkpoint must reference a step from 1 to {step_count}")
+        if evidence.get("Recovery replay passed", "").lower() != "true":
+            errors.append("Tested harness must state 'Recovery replay passed: true'")
+        if evidence.get("Verified browser lane", "").strip().lower() in empty_evidence:
+            errors.append("Tested harness must name the verified browser lane")
+        if evidence.get("Dummy dataset", "").strip().lower() in empty_evidence:
+            errors.append("Tested harness must describe the dummy dataset")
+
+        checklist = _section(body, "## Verification Checklist")
+        for label in REQUIRED_VERIFICATION_CHECKS:
+            if not re.search(rf"(?im)^- \[x\]\s+{re.escape(label)}\s*$", checklist):
+                errors.append(f"Tested harness must check verification item: {label}")
+
     if LOCAL_REF_RE.search(content):
         errors.append("harness contains a session-local browser ref such as @e12")
     if SECRET_RE.search(content):
         errors.append("harness contains a credential-like value")
     if PRIVATE_PATH_RE.search(content):
         errors.append("harness contains a user-specific local path")
-    if not re.search(r"(?im)^- Final side effect crossed:\s*(?:`)?false(?:`)?\s*$", body):
-        errors.append("Verification Evidence must state 'Final side effect crossed: false'")
 
     return errors
 

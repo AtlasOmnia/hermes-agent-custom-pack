@@ -2,7 +2,7 @@
 
 A modern, filesystem-first architecture for using Obsidian as Hermes Agent's durable knowledge layer.
 
-![Obsidian Memory Architecture routes compact facts, session history, canonical documents, reusable procedures, and scheduled collection to the right system](assets/memory-architecture.png)
+![Obsidian Memory Architecture routes compact facts, session history, canonical documents, reusable procedures, and scheduled collection to the right system](https://raw.githubusercontent.com/AtlasOmnia/hermes-agent-custom-pack/main/assets/obsidian-memory-architecture.png)
 
 This project grew from the Reddit guide [How I use Obsidian as the long-term memory backbone for my AI assistant](https://www.reddit.com/r/hermesagent/comments/1stz6gd/how_i_use_obsidian_as_the_longterm_memory/). The original three-tier idea remains useful, but Hermes has evolved: it now has bounded built-in memory, searchable session history, optional memory-provider plugins, skill lifecycle tooling, and substantially richer cron jobs.
 

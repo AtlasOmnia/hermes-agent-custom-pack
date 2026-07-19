@@ -110,6 +110,8 @@ Do not use when the harness is expired, the domain differs, authentication state
 - Dummy dataset: Describe generically; do not include personal data
 - Steps passed: `0/3`
 - Recovery path tested: None yet
+- Recovery checkpoint: None yet
+- Recovery replay passed: `false`
 - Final side effect crossed: `false`
 - Known limitations: List observed limitations
 

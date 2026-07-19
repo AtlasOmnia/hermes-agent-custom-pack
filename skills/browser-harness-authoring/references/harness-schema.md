@@ -68,6 +68,8 @@ A tool reporting that it clicked or typed successfully is not a checkpoint. Chec
 
 `Tested: true` requires every mandatory step to be verified, at least one safe recovery path to be exercised, and the final side effect to remain uncrossed.
 
+The `Verification Evidence` section must keep its evidence fields inside that section. It must report `Steps passed: N/N`, identify `Recovery path tested: Step N`, identify the restored `Recovery checkpoint: Step N`, state `Recovery replay passed: true`, and keep `Final side effect crossed: false` before `Tested: true` is valid. The structured step references prevent free-form negative or placeholder statements from being mistaken for evidence that a recovery path ran and returned to a known checkpoint.
+
 ## Expiry
 
 Default to 30 days. Use 7 days when the flow depends on vision, coordinates, brittle selectors, or frequently changing UI. High-consequence flows must be rechecked before every run.
