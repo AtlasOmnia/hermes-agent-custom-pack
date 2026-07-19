@@ -13,21 +13,22 @@ This repository is unofficial and is not affiliated with or endorsed by Nous Res
 | Package | Purpose | Status |
 |---|---|---|
 | [Obsidian Memory Architecture](skills/obsidian-memory-architecture/) | Use Obsidian as Hermes's durable knowledge and coordination layer without duplicating native memory, session history, or skills | Ready |
+| [Browser Harness Authoring](skills/browser-harness-authoring/) | Survey a repeatable website flow, save stable semantic targets and recovery paths, and verify a no-submit harness for later execution | Ready |
 
 Additional packages will be added only after they are generalized, tested, and cleared of private configuration.
 
 ## Install a skill
 
-Inspect the skill before installing:
+Inspect a skill before installing it. For Browser Harness Authoring:
 
 ```bash
-hermes skills inspect https://raw.githubusercontent.com/AtlasOmnia/hermes-agent-custom-pack/main/skills/obsidian-memory-architecture/SKILL.md
+hermes skills inspect https://raw.githubusercontent.com/AtlasOmnia/hermes-agent-custom-pack/main/skills/browser-harness-authoring/SKILL.md
 ```
 
 Install it directly:
 
 ```bash
-hermes skills install https://raw.githubusercontent.com/AtlasOmnia/hermes-agent-custom-pack/main/skills/obsidian-memory-architecture/SKILL.md
+hermes skills install https://raw.githubusercontent.com/AtlasOmnia/hermes-agent-custom-pack/main/skills/browser-harness-authoring/SKILL.md
 ```
 
 Start a new Hermes session after installation so the skill registry is refreshed.
@@ -58,6 +59,13 @@ Every published package should include:
 - attribution and licensing appropriate to its sources.
 
 Pull requests must pass the repository validation workflow. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+
+Run all collection checks locally:
+
+```bash
+python3 scripts/validate_collection.py
+python3 scripts/test_collection.py
+```
 
 ## Compatibility
 

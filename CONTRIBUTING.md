@@ -2,7 +2,7 @@
 
 Contributions that improve portability, verification, safety, or current Hermes compatibility are welcome.
 
-## Adding a tool
+## Adding a package
 
 Use the appropriate directory:
 
@@ -25,12 +25,11 @@ Keep the main skill concise. Move large supporting material into `references/`, 
 
 ## Required checks
 
-Run the tool's own tests and validator from its directory. For the Obsidian skill:
+Run the collection validator and every package test suite from the repository root:
 
 ```bash
-cd skills/obsidian-memory-architecture
-python3 scripts/validate_skill.py
-python3 -m unittest discover -s tests -v
+python3 scripts/validate_collection.py
+python3 scripts/test_collection.py
 ```
 
 Before opening a pull request:
