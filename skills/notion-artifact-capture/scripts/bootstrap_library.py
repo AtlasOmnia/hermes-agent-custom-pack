@@ -138,7 +138,14 @@ class NotionAPI:
         )
         try:
             with urlopen(request, timeout=30) as response:
-                return json.loads(response.read().decode("utf-8"))
+                raw = response.read().decode("utf-8")
+                try:
+                    decoded = json.loads(raw)
+                except json.JSONDecodeError as exc:
+                    raise RuntimeError("Notion API returned malformed JSON") from exc
+                if not isinstance(decoded, dict):
+                    raise RuntimeError("Notion API returned an unexpected response shape")
+                return decoded
         except HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")
             try:

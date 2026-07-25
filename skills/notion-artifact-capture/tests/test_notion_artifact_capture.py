@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 import sys
 
@@ -10,6 +11,7 @@ sys.path.insert(0, str(SCRIPTS))
 from bootstrap_library import (
     API_VERSION,
     CreatedDatabaseVerificationError,
+    NotionAPI,
     REQUIRED_SCHEMA,
     bootstrap,
     build_create_payload,
@@ -34,6 +36,20 @@ class FakeAPI:
         return response
 
 
+class FakeHTTPResponse:
+    def __init__(self, body):
+        self.body = body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False
+
+    def read(self):
+        return self.body
+
+
 def schema_response():
     return {
         "object": "data_source",
@@ -54,6 +70,16 @@ def option_schema(name, kind):
 
 
 class BootstrapTests(unittest.TestCase):
+    def test_api_normalizes_malformed_success_json_to_runtime_error(self):
+        with patch("bootstrap_library.urlopen", return_value=FakeHTTPResponse(b"not-json")):
+            with self.assertRaisesRegex(RuntimeError, "malformed JSON"):
+                NotionAPI("test-token").request("GET", "/pages/example")
+
+    def test_api_rejects_non_object_success_json(self):
+        with patch("bootstrap_library.urlopen", return_value=FakeHTTPResponse(b"[]")):
+            with self.assertRaisesRegex(RuntimeError, "unexpected response shape"):
+                NotionAPI("test-token").request("GET", "/pages/example")
+
     def test_normalizes_raw_id_and_notion_url(self):
         expected = "11111111-1111-1111-1111-111111111111"
         self.assertEqual(normalize_notion_id(expected), expected)
