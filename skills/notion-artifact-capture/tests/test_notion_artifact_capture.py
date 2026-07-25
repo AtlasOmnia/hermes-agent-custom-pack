@@ -1,7 +1,10 @@
+import io
 import json
 import tempfile
 import unittest
+from email.message import Message
 from unittest.mock import patch
+from urllib.error import HTTPError
 from pathlib import Path
 import sys
 
@@ -78,6 +81,23 @@ class BootstrapTests(unittest.TestCase):
     def test_api_rejects_non_object_success_json(self):
         with patch("bootstrap_library.urlopen", return_value=FakeHTTPResponse(b"[]")):
             with self.assertRaisesRegex(RuntimeError, "unexpected response shape"):
+                NotionAPI("test-token").request("GET", "/pages/example")
+
+    def test_api_normalizes_invalid_utf8_to_runtime_error(self):
+        with patch("bootstrap_library.urlopen", return_value=FakeHTTPResponse(b"\xff\xfe")):
+            with self.assertRaisesRegex(RuntimeError, "invalid UTF-8"):
+                NotionAPI("test-token").request("GET", "/pages/example")
+
+    def test_api_normalizes_non_object_http_error_body(self):
+        error = HTTPError(
+            "https://api.notion.com/v1/pages/example",
+            400,
+            "Bad Request",
+            Message(),
+            io.BytesIO(b"[]"),
+        )
+        with patch("bootstrap_library.urlopen", side_effect=error):
+            with self.assertRaisesRegex(RuntimeError, r"Notion API 400: \[\]"):
                 NotionAPI("test-token").request("GET", "/pages/example")
 
     def test_normalizes_raw_id_and_notion_url(self):
