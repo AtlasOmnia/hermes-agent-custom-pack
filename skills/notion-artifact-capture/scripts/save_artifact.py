@@ -16,6 +16,15 @@ from bootstrap_library import NotionAPI, REQUIRED_SCHEMA, default_config_path, v
 MAX_RICH_TEXT_CHUNK = 2000
 
 
+class CreatedPageVerificationError(RuntimeError):
+    """A page was created, but its read-back could not be confirmed."""
+
+    def __init__(self, created_page: dict[str, Any], message: str) -> None:
+        super().__init__(message)
+        self.page_id = created_page.get("id", "")
+        self.page_url = created_page.get("url", "")
+
+
 def rich_text(value: str) -> dict[str, list[dict[str, Any]]]:
     chunks = [value[index : index + MAX_RICH_TEXT_CHUNK] for index in range(0, len(value), MAX_RICH_TEXT_CHUNK)]
     return {"rich_text": [{"type": "text", "text": {"content": chunk}} for chunk in chunks]}
@@ -123,10 +132,19 @@ def save_artifact(api: NotionAPI, config: dict[str, Any], **artifact: Any) -> di
     page_id = created.get("id")
     if not isinstance(page_id, str) or not page_id:
         raise RuntimeError("Notion returned no page ID")
-    verified = api.request("GET", f"/pages/{page_id}")
+    try:
+        verified = api.request("GET", f"/pages/{page_id}")
+    except RuntimeError as exc:
+        raise CreatedPageVerificationError(
+            created,
+            "Notion created the page, but read-back failed. Inspect the reported page before retrying.",
+        ) from exc
     expected_name = artifact["name"][:MAX_RICH_TEXT_CHUNK]
     if extract_page_title(verified) != expected_name:
-        raise RuntimeError("Notion page read-back did not match the saved artifact title")
+        raise CreatedPageVerificationError(
+            created,
+            "Notion created the page, but its read-back title did not match. Inspect the reported page before retrying.",
+        )
     return verified
 
 
@@ -188,6 +206,14 @@ def main(argv: list[str] | None = None) -> int:
         if page.get("url"):
             print(f"url={page['url']}")
         return 0
+    except CreatedPageVerificationError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        print("NOTION_ARTIFACT_SAVE=CREATED_UNVERIFIED", file=sys.stderr)
+        if exc.page_id:
+            print(f"page_id={exc.page_id}", file=sys.stderr)
+        if exc.page_url:
+            print(f"url={exc.page_url}", file=sys.stderr)
+        return 2
     except (RuntimeError, ValueError, OSError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

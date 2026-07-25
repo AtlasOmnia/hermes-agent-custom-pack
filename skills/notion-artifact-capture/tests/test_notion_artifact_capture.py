@@ -9,13 +9,14 @@ sys.path.insert(0, str(SCRIPTS))
 
 from bootstrap_library import (
     API_VERSION,
+    CreatedDatabaseVerificationError,
     REQUIRED_SCHEMA,
     bootstrap,
     build_create_payload,
     normalize_notion_id,
     verify_schema,
 )
-from save_artifact import build_page_payload, normalize_tags, save_artifact
+from save_artifact import CreatedPageVerificationError, build_page_payload, normalize_tags, save_artifact
 
 
 class FakeAPI:
@@ -27,7 +28,10 @@ class FakeAPI:
         self.calls.append((method, path, payload))
         if not self.responses:
             raise AssertionError(f"Unexpected API call: {method} {path}")
-        return self.responses.pop(0)
+        response = self.responses.pop(0)
+        if isinstance(response, Exception):
+            raise response
+        return response
 
 
 def schema_response():
@@ -89,6 +93,32 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(api.calls[0][0:2], ("POST", "/databases"))
         self.assertEqual(api.calls[1][0:2], ("GET", "/data_sources/22222222-2222-2222-2222-222222222222"))
 
+    def test_bootstrap_retrieves_database_when_create_response_omits_data_sources(self):
+        created = {
+            "object": "database",
+            "id": "33333333-3333-3333-3333-333333333333",
+        }
+        retrieved = {
+            **created,
+            "data_sources": [{"id": "22222222-2222-2222-2222-222222222222"}],
+        }
+        api = FakeAPI([created, retrieved, schema_response()])
+        with tempfile.TemporaryDirectory() as tmp:
+            bootstrap(
+                api,
+                "11111111-1111-1111-1111-111111111111",
+                "AI Output Library",
+                Path(tmp) / "capture.json",
+            )
+        self.assertEqual(
+            [call[0:2] for call in api.calls],
+            [
+                ("POST", "/databases"),
+                ("GET", "/databases/33333333-3333-3333-3333-333333333333"),
+                ("GET", "/data_sources/22222222-2222-2222-2222-222222222222"),
+            ],
+        )
+
     def test_bootstrap_refuses_to_replace_config_without_force(self):
         created = {
             "id": "33333333-3333-3333-3333-333333333333",
@@ -107,6 +137,24 @@ class BootstrapTests(unittest.TestCase):
         del schema["properties"]["Notes"]
         with self.assertRaisesRegex(RuntimeError, "Notes"):
             verify_schema(schema)
+
+    def test_bootstrap_preserves_created_ids_when_schema_readback_fails(self):
+        created = {
+            "id": "33333333-3333-3333-3333-333333333333",
+            "data_sources": [{"id": "22222222-2222-2222-2222-222222222222"}],
+        }
+        api = FakeAPI([created, RuntimeError("temporary timeout")])
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(CreatedDatabaseVerificationError) as caught:
+                bootstrap(
+                    api,
+                    "11111111-1111-1111-1111-111111111111",
+                    "AI Output Library",
+                    Path(tmp) / "capture.json",
+                )
+        self.assertEqual(caught.exception.database_id, created["id"])
+        self.assertEqual(caught.exception.data_source_id, created["data_sources"][0]["id"])
+        self.assertIn("before retrying", str(caught.exception))
 
 
 class SaveTests(unittest.TestCase):
@@ -184,6 +232,32 @@ class SaveTests(unittest.TestCase):
             ("GET", "/pages/44444444-4444-4444-4444-444444444444"),
         ])
         self.assertEqual(api.calls[1][2]["markdown"], "# Artifact\n\nBody")
+
+    def test_save_preserves_created_page_identity_when_readback_fails(self):
+        created = {
+            "id": "44444444-4444-4444-4444-444444444444",
+            "url": "https://www.notion.so/44444444444444444444444444444444",
+        }
+        api = FakeAPI([schema_response(), created, RuntimeError("temporary timeout")])
+        with self.assertRaises(CreatedPageVerificationError) as caught:
+            save_artifact(
+                api,
+                {"data_source_id": "22222222-2222-2222-2222-222222222222"},
+                name="Artifact",
+                artifact_type="Other",
+                status="Saved",
+                topic="",
+                summary="",
+                source_url="",
+                file_path="",
+                tags=[],
+                notes="",
+                markdown="",
+                today="2026-07-25",
+            )
+        self.assertEqual(caught.exception.page_id, created["id"])
+        self.assertEqual(caught.exception.page_url, created["url"])
+        self.assertIn("before retrying", str(caught.exception))
 
     def test_normalize_tags_is_ordered_and_case_insensitive(self):
         self.assertEqual(normalize_tags(["AI, Research", "research", "  Models  "]), ["AI", "Research", "Models"])

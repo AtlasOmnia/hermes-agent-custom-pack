@@ -33,6 +33,15 @@ REQUIRED_SCHEMA = {
 }
 
 
+class CreatedDatabaseVerificationError(RuntimeError):
+    """A database was created, but bootstrap could not verify or record it."""
+
+    def __init__(self, database_id: str, data_source_id: str, message: str) -> None:
+        super().__init__(message)
+        self.database_id = database_id
+        self.data_source_id = data_source_id
+
+
 def default_config_path() -> Path:
     hermes_home = Path(os.environ.get("HERMES_HOME", "~/.hermes")).expanduser()
     return hermes_home / "notion-artifact-capture.json"
@@ -191,19 +200,33 @@ def bootstrap(
     database_id = database.get("id")
     if not isinstance(database_id, str) or not database_id:
         raise RuntimeError("Notion returned no database ID")
-    data_source_id = extract_data_source_id(database)
-    verified = api.request("GET", f"/data_sources/{data_source_id}")
-    verify_schema(verified)
-    config = {
-        "version": 1,
-        "api_version": API_VERSION,
-        "database_title": title,
-        "database_id": database_id,
-        "data_source_id": data_source_id,
-        "parent_page_id": parent_page_id,
-    }
-    write_config(expanded_config_path, config, force=force)
-    return config
+    data_source_id = ""
+    try:
+        try:
+            data_source_id = extract_data_source_id(database)
+        except RuntimeError:
+            # Some response projections omit the expanded data_sources list.
+            # Retrieve the database once before treating the successful create as unusable.
+            database = api.request("GET", f"/databases/{database_id}")
+            data_source_id = extract_data_source_id(database)
+        verified = api.request("GET", f"/data_sources/{data_source_id}")
+        verify_schema(verified)
+        config = {
+            "version": 1,
+            "api_version": API_VERSION,
+            "database_title": title,
+            "database_id": database_id,
+            "data_source_id": data_source_id,
+            "parent_page_id": parent_page_id,
+        }
+        write_config(expanded_config_path, config, force=force)
+        return config
+    except (RuntimeError, OSError) as exc:
+        raise CreatedDatabaseVerificationError(
+            database_id,
+            data_source_id,
+            "Notion created the database, but bootstrap could not verify or record it. Inspect the reported IDs before retrying.",
+        ) from exc
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -232,6 +255,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"data_source_id={config['data_source_id']}")
         print(f"config={args.config.expanduser()}")
         return 0
+    except CreatedDatabaseVerificationError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        print("NOTION_LIBRARY_BOOTSTRAP=CREATED_UNVERIFIED", file=sys.stderr)
+        print(f"database_id={exc.database_id}", file=sys.stderr)
+        if exc.data_source_id:
+            print(f"data_source_id={exc.data_source_id}", file=sys.stderr)
+        return 2
     except (FileExistsError, RuntimeError, ValueError, OSError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1

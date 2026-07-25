@@ -35,11 +35,22 @@ hermes skills install https://raw.githubusercontent.com/AtlasOmnia/hermes-agent-
 
 For the scripts and tests, copy the full package:
 
+macOS/Linux:
+
 ```bash
 git clone https://github.com/AtlasOmnia/hermes-agent-custom-pack.git
 mkdir -p ~/.hermes/skills/productivity/notion-artifact-capture
 cp -R hermes-agent-custom-pack/skills/notion-artifact-capture/. \
   ~/.hermes/skills/productivity/notion-artifact-capture/
+```
+
+Windows PowerShell:
+
+```powershell
+git clone https://github.com/AtlasOmnia/hermes-agent-custom-pack.git
+$dest = Join-Path $HOME ".hermes\skills\productivity\notion-artifact-capture"
+New-Item -ItemType Directory -Force -Path $dest | Out-Null
+Copy-Item -Recurse -Force ".\hermes-agent-custom-pack\skills\notion-artifact-capture\*" $dest
 ```
 
 Start a fresh session or run `/reload-skills`.
@@ -65,6 +76,8 @@ ${HERMES_HOME:-~/.hermes}/notion-artifact-capture.json
 
 That file contains object IDs, not the integration token. Bootstrap refuses to replace it unless `--force` is explicitly supplied.
 
+If Notion creates the database but verification or local config writing fails, bootstrap exits with code `2`, prints `CREATED_UNVERIFIED`, and reports every returned database/data-source ID for inspection before retrying.
+
 ## Save an artifact
 
 ```bash
@@ -86,6 +99,8 @@ The save script:
 3. creates a typed Notion page using the current `data_source_id` parent contract;
 4. fetches the created page by ID;
 5. confirms the title and returns its URL.
+
+If creation succeeds but read-back fails, the script exits with code `2`, prints `CREATED_UNVERIFIED`, and returns the created page ID/URL so the user can inspect it before retrying instead of creating a duplicate blindly.
 
 ## Schema
 

@@ -104,11 +104,22 @@ hermes skills install https://raw.githubusercontent.com/AtlasOmnia/hermes-agent-
 
 For the bootstrap/save scripts and tests, clone the collection and copy the full package:
 
+macOS/Linux:
+
 ```bash
 git clone https://github.com/AtlasOmnia/hermes-agent-custom-pack.git
 mkdir -p ~/.hermes/skills/productivity/notion-artifact-capture
 cp -R hermes-agent-custom-pack/skills/notion-artifact-capture/. \
   ~/.hermes/skills/productivity/notion-artifact-capture/
+```
+
+Windows PowerShell:
+
+```powershell
+git clone https://github.com/AtlasOmnia/hermes-agent-custom-pack.git
+$dest = Join-Path $HOME ".hermes\skills\productivity\notion-artifact-capture"
+New-Item -ItemType Directory -Force -Path $dest | Out-Null
+Copy-Item -Recurse -Force ".\hermes-agent-custom-pack\skills\notion-artifact-capture\*" $dest
 ```
 
 Start a new Hermes session or run `/reload-skills` after installation.
@@ -150,6 +161,8 @@ ${HERMES_HOME:-~/.hermes}/notion-artifact-capture.json
 ```
 
 The script refuses to replace an existing local config unless `--force` is supplied. Do not use `--force` until the user intends to change the default destination; creating another database accidentally is annoyingly easy and impressively unhelpful.
+
+If Notion creates the database but verification or config writing fails, the script reports `CREATED_UNVERIFIED` with every available database/data-source ID and exits with code `2`. Inspect that object before retrying; do not create a second database blindly.
 
 ### Created schema
 
@@ -236,9 +249,12 @@ When the user says “save to Notion”:
    - never request the integration token in chat.
 5. Fetch the live data-source schema before writing.
 6. Map only properties that exist with the expected types.
-7. Create the page with `parent.data_source_id` under the current Notion API.
-8. Read the created page back by ID and confirm its title.
-9. Report the Notion page URL and row title.
+7. If database creation omits the expanded data-source list, retrieve the new database once to resolve its initial data-source ID.
+8. Create the page with `parent.data_source_id` under the current Notion API.
+9. Read the created page back by ID and confirm its title.
+10. Report the Notion page URL and row title.
+
+If creation succeeds but read-back fails or the title differs, do not hide the successful side effect. Report `CREATED_UNVERIFIED` with the returned page ID/URL, tell the user to inspect that page, and do not retry automatically.
 
 If the scripts are not installed, perform the same sequence using the API mechanics in the general `notion` skill. Never fall back to somebody else’s hardcoded database ID.
 
