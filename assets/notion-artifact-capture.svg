@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Notion Artifact Capture workflow</title>
+  <desc id="desc">A two-stage workflow: the user creates and shares a parent page, Hermes bootstraps and verifies an AI Output Library, then later save requests fetch the live schema, create a page, read it back, and return the verified URL.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1020"/>
+      <stop offset="1" stop-color="#161c32"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#75e6da"/>
+      <stop offset="1" stop-color="#7aa2ff"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity=".28"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#75e6da"/>
+    </marker>
+    <style>
+      .title { font: 700 54px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #f7f9ff; }
+      .subtitle { font: 400 24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #aeb9d6; }
+      .stage { font: 700 20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: 2px; fill: #75e6da; }
+      .box-title { font: 700 25px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #f7f9ff; }
+      .body { font: 400 19px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #bcc6df; }
+      .small { font: 600 17px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #dce4f8; }
+      .chip { fill: #222b47; stroke: #394769; stroke-width: 1.5; }
+      .box { fill: #171f36; stroke: #34405f; stroke-width: 2; }
+      .box-accent { fill: #142838; stroke: #4fb8b2; stroke-width: 2; }
+      .line { stroke: #75e6da; stroke-width: 4; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <circle cx="1420" cy="80" r="260" fill="#243566" opacity=".18"/>
+  <circle cx="120" cy="850" r="310" fill="#166b72" opacity=".12"/>
+
+  <text x="90" y="105" class="title">Notion Artifact Capture</text>
+  <text x="90" y="148" class="subtitle">One user-owned destination. Live schema checks. Verified saves.</text>
+  <rect x="90" y="176" width="1420" height="4" rx="2" fill="url(#accent)"/>
+
+  <text x="90" y="235" class="stage">ONE-TIME BOOTSTRAP</text>
+
+  <g filter="url(#shadow)">
+    <rect x="90" y="270" width="320" height="210" rx="24" class="box"/>
+    <circle cx="140" cy="320" r="24" fill="#7aa2ff" opacity=".22"/>
+    <path d="M130 320h20M140 310v20" stroke="#9db8ff" stroke-width="3" stroke-linecap="round"/>
+    <text x="180" y="328" class="box-title">User creates page</text>
+    <text x="125" y="375" class="body">Blank Notion parent page</text>
+    <text x="125" y="407" class="body">Shared with the integration</text>
+    <text x="125" y="446" class="small">Token never enters chat</text>
+  </g>
+
+  <path d="M420 375 H535" class="line"/>
+
+  <g filter="url(#shadow)">
+    <rect x="545" y="270" width="390" height="210" rx="24" class="box-accent"/>
+    <text x="585" y="324" class="box-title">Hermes bootstraps library</text>
+    <text x="585" y="370" class="body">Creates typed database schema</text>
+    <text x="585" y="402" class="body">Reads the data source back</text>
+    <text x="585" y="434" class="body">Stores destination IDs locally</text>
+  </g>
+
+  <path d="M945 375 H1060" class="line"/>
+
+  <g filter="url(#shadow)">
+    <rect x="1070" y="270" width="440" height="210" rx="24" class="box"/>
+    <text x="1110" y="324" class="box-title">AI Output Library</text>
+    <g transform="translate(1110 355)">
+      <rect width="86" height="36" rx="18" class="chip"/><text x="18" y="24" class="small">Name</text>
+      <rect x="98" width="78" height="36" rx="18" class="chip"/><text x="117" y="24" class="small">Type</text>
+      <rect x="188" width="90" height="36" rx="18" class="chip"/><text x="205" y="24" class="small">Status</text>
+      <rect x="290" width="100" height="36" rx="18" class="chip"/><text x="307" y="24" class="small">Topic</text>
+      <rect y="50" width="112" height="36" rx="18" class="chip"/><text x="17" y="74" class="small">Summary</text>
+      <rect x="124" y="50" width="120" height="36" rx="18" class="chip"/><text x="142" y="74" class="small">Source URL</text>
+      <rect x="256" y="50" width="92" height="36" rx="18" class="chip"/><text x="274" y="74" class="small">Tags</text>
+    </g>
+  </g>
+
+  <text x="90" y="560" class="stage">EVERY “SAVE TO NOTION” REQUEST</text>
+
+  <g filter="url(#shadow)">
+    <rect x="90" y="595" width="300" height="190" rx="24" class="box"/>
+    <text x="130" y="650" class="box-title">Resolve artifact</text>
+    <text x="130" y="695" class="body">Title + typed metadata</text>
+    <text x="130" y="727" class="body">Optional Markdown body</text>
+  </g>
+
+  <path d="M400 690 H495" class="line"/>
+
+  <g filter="url(#shadow)">
+    <rect x="505" y="595" width="300" height="190" rx="24" class="box"/>
+    <text x="545" y="650" class="box-title">Fetch live schema</text>
+    <text x="545" y="695" class="body">Confirm names and types</text>
+    <text x="545" y="727" class="body">Stop safely on drift</text>
+  </g>
+
+  <path d="M815 690 H910" class="line"/>
+
+  <g filter="url(#shadow)">
+    <rect x="920" y="595" width="270" height="190" rx="24" class="box-accent"/>
+    <text x="960" y="650" class="box-title">Create page</text>
+    <text x="960" y="695" class="body">Typed properties</text>
+    <text x="960" y="727" class="body">Full Markdown preserved</text>
+  </g>
+
+  <path d="M1200 690 H1295" class="line"/>
+
+  <g filter="url(#shadow)">
+    <rect x="1305" y="595" width="205" height="190" rx="24" class="box"/>
+    <text x="1345" y="650" class="box-title">Verify</text>
+    <text x="1345" y="695" class="body">Read back</text>
+    <text x="1345" y="727" class="body">Return URL</text>
+    <circle cx="1470" cy="748" r="18" fill="#75e6da" opacity=".2"/>
+    <path d="M1461 748l6 6 13-15" stroke="#75e6da" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <text x="90" y="850" class="subtitle">Generic by design · No embedded workspace IDs · No credentials · Cross-platform Python</text>
+</svg>
