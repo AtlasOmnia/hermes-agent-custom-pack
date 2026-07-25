@@ -14,7 +14,7 @@ This repository is unofficial and is not affiliated with or endorsed by Nous Res
 |---|---|---|
 | [Obsidian Memory Architecture](skills/obsidian-memory-architecture/) | Use Obsidian as Hermes's durable knowledge and coordination layer without duplicating native memory, session history, or skills | Ready |
 | [Browser Harness Authoring](skills/browser-harness-authoring/) | Survey a repeatable website flow, save stable semantic targets and recovery paths, and verify a no-submit harness for later execution | Ready |
-| [Notion Artifact Capture](skills/notion-artifact-capture/) | Bootstrap a user-owned AI Output Library and turn “save to Notion” into a typed, live-schema-checked, read-back-verified workflow | Ready |
+| [Notion Artifact Capture](skills/notion-artifact-capture/) | Save and organize AI-generated content in a user-owned Notion library | Ready |
 
 Additional packages will be added only after they are generalized, tested, and cleared of private configuration.
 
