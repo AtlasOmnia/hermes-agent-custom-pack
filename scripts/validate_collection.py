@@ -15,16 +15,24 @@ RECOMMENDED_HEADINGS = (
     "## Common Pitfalls",
     "## Verification Checklist",
 )
+# Case-insensitive variants accepted in place of any recommended heading.
+HEADING_VARIANTS = {
+    "## Overview": ("## overview",),
+    "## When to Use": ("## when to use",),
+    "## Common Pitfalls": ("## common pitfalls", "## pitfalls"),
+    "## Verification Checklist": ("## verification checklist", "## verification"),
+}
 
 
-def validate_skill(path: Path) -> list[str]:
+def validate_skill(path: Path) -> tuple[list[str], list[str]]:
     errors: list[str] = []
+    warnings: list[str] = []
     content = path.read_text(encoding="utf-8")
     if not content.startswith("---\n"):
-        return ["must start with YAML frontmatter at byte zero"]
+        return [f"must start with YAML frontmatter at byte zero"], []
     marker = content.find("\n---\n", 4)
     if marker < 0:
-        return ["frontmatter is not closed"]
+        return [f"frontmatter is not closed"], []
     frontmatter = content[4:marker]
     body = content[marker + 5 :]
     name_match = re.search(r"(?m)^name:\s*([^\n]+)$", frontmatter)
@@ -43,10 +51,12 @@ def validate_skill(path: Path) -> list[str]:
         errors.append("skill body is empty")
     if len(content) > 100_000:
         errors.append("SKILL.md exceeds 100,000 characters")
+    lower = body.lower()
     for heading in RECOMMENDED_HEADINGS:
-        if heading not in body:
-            errors.append(f"missing recommended heading: {heading}")
-    return errors
+        variants = (heading,) + HEADING_VARIANTS[heading]
+        if not any(variant.lower() in lower for variant in variants):
+            warnings.append(f"missing recommended heading: {heading}")
+    return errors, warnings
 
 
 def main() -> int:
@@ -56,7 +66,9 @@ def main() -> int:
         return 1
     failures = 0
     for path in paths:
-        errors = validate_skill(path)
+        errors, warnings = validate_skill(path)
+        for warning in warnings:
+            print(f"WARNING: {path.relative_to(ROOT)}: {warning}")
         if errors:
             failures += 1
             for error in errors:
